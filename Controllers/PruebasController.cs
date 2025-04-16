@@ -45,6 +45,27 @@ namespace BachataApi.Controllers
             return Ok($"ID {id} eliminado");
         }
 
+        // NUEVO: GET que lee una variable de entorno
+        // GET: api/pruebas/entorno
+        [HttpGet("entorno")]
+        public IActionResult LeerVariableEntorno()
+        {
+            var valor = Environment.GetEnvironmentVariable("MI_VARIABLE_PRUEBA");
+            if (string.IsNullOrEmpty(valor))
+                return NotFound("La variable de entorno 'MI_VARIABLE_PRUEBA' no está definida.");
+
+            return Ok($"Valor de MI_VARIABLE_PRUEBA: {valor}");
+        }
+
+        [HttpGet("entorno/{id}")]
+        public IActionResult LeerVariableEntornoParam(string id)
+        {
+            var valor = Environment.GetEnvironmentVariable(id);
+            if (string.IsNullOrEmpty(valor))
+                return NotFound($"La variable de entorno '{id}' no está definida.");
+
+            return Ok($"Valor de {id}: {valor}");
+        }
 
     }
 }
