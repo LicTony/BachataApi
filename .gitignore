@@ -398,3 +398,17 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+
+
+# No subir configuraciones locales de Visual Studio
+Properties/launchSettings.json
+
+
+# -------------------------------
+# Archivos de configuración local
+# -------------------------------
+*.env
+.env
+*.local.json
+/Properties/launchSettings.json
