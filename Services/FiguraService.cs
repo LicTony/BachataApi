@@ -1,7 +1,12 @@
 ﻿using BachataApi.Configuration;
+using BachataApi.DTOs;
 using BachataApi.Models;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Core.Configuration;
+using System.Drawing;
+using BachataApi.Extensions;
 
 namespace BachataApi.Services
 {
@@ -11,7 +16,12 @@ namespace BachataApi.Services
 
         public FiguraService(IOptions<MongoDbSettings> settings)
         {
-            var mongoClient = new MongoClient(settings.Value.ConnectionString);
+
+            var ConnectionString = Environment.GetEnvironmentVariable("ConnectionString");
+            if (string.IsNullOrEmpty(ConnectionString))
+                throw new KeyNotFoundException("La variable de entorno 'ConnectionString' no está definida.");
+
+            var mongoClient = new MongoClient(ConnectionString);
             var database = mongoClient.GetDatabase(settings.Value.DatabaseName);
             _figurasCollection = database.GetCollection<Figura>(settings.Value.FigurasCollectionName);
         }
@@ -24,34 +34,62 @@ namespace BachataApi.Services
         public async Task<Figura?> GetByIdAsync(string id) =>
             await _figurasCollection.Find(f => f.Id == id).FirstOrDefaultAsync();
 
-        public async Task CreateAsync(Figura figura) =>
-            await _figurasCollection.InsertOneAsync(figura);
+        public async Task<Figura> CreateAsync(CreateFiguraDto dto)
+        {
 
-        public async Task UpdateAsync(string id, Figura updatedFigura) =>
+            Figura figura = dto.ToModel();
+
+            await _figurasCollection.InsertOneAsync(figura);
+            return figura;
+        }
+
+        public async Task UpdateAsync(string id, UpdateFiguraDto dto) 
+        {
+            Figura updatedFigura = dto.ToModel();
+
+            //Obtengo los pasos de la figura a nodificar
+            Figura aux=  await _figurasCollection.Find(f => f.Id == id).FirstOrDefaultAsync();
+
+            updatedFigura.Pasos = aux.Pasos;
+
             await _figurasCollection.ReplaceOneAsync(f => f.Id == id, updatedFigura);
+        }
+
+
+        public async Task UpdateAsyncWithPasos(string id, Figura updatedFigura)
+        {
+            await _figurasCollection.ReplaceOneAsync(f => f.Id == id, updatedFigura);
+        }
+
 
         public async Task DeleteAsync(string id) =>
             await _figurasCollection.DeleteOneAsync(f => f.Id == id);
 
 
         // PASOS: Agregar un nuevo paso a una figura
-        public async Task AddPasoAsync(string figuraId, Paso paso)
+        public async Task AddPasoAsync(string figuraId, CreatePasoDto dto)
         {
+
+            Paso paso = dto.ToModel();
+
             var update = Builders<Figura>.Update.Push(f => f.Pasos, paso);
             await _figurasCollection.UpdateOneAsync(f => f.Id == figuraId, update);
         }
 
         // PASOS: Editar un paso existente
-        public async Task UpdatePasoAsync(string figuraId, Paso paso)
+        public async Task UpdatePasoAsync(string figuraId, UpdatetPasoDto dto)
         {
             var figura = await GetByIdAsync(figuraId);
             if (figura is null) return;
 
-            var index = figura.Pasos.FindIndex(p => p.Id == paso.Id);
+            var index = figura.Pasos.FindIndex(p => p.Id == dto.Id);
             if (index == -1) return;
 
+            Paso paso = dto.ToModel();
+
             figura.Pasos[index] = paso;
-            await UpdateAsync(figuraId, figura);
+            
+            await UpdateAsyncWithPasos(figuraId, figura);
         }
 
         // PASOS: Eliminar un paso
@@ -73,7 +111,7 @@ namespace BachataApi.Services
             if (paso1 is null || paso2 is null) return;
 
             (paso2.Orden, paso1.Orden) = (paso1.Orden, paso2.Orden);
-            await UpdateAsync(figuraId, figura);
+            await UpdateAsyncWithPasos(figuraId, figura);
         }
 
     }

@@ -7,7 +7,7 @@ namespace BachataApi.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public required  string Id { get; set; } = ObjectId.GenerateNewId().ToString();
+        public required string Id { get; set; } = ObjectId.GenerateNewId().ToString();
 
         public required int Orden { get; set; }
         public required int TiempoDesde { get; set; }
