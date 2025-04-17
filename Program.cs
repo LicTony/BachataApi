@@ -3,6 +3,14 @@ using BachataApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Agrega configuración extra si hace falta (opcional)
+builder.Host.ConfigureAppConfiguration((context, config) =>
+{
+    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+          .AddEnvironmentVariables();
+});
+
+
 // Add services to the container.
 builder.Services.Configure<MongoDbSettings>(
     builder.Configuration.GetSection("MongoDbSettings"));

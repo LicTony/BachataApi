@@ -17,7 +17,9 @@ namespace BachataApi.Services
         public FiguraService(IOptions<MongoDbSettings> settings)
         {
 
-            var ConnectionString = Environment.GetEnvironmentVariable("ConnectionString");
+            var ConnectionStringAux = Environment.GetEnvironmentVariable("ConnectionString");
+            var ConnectionString = settings.Value.ConnectionString;
+
             if (string.IsNullOrEmpty(ConnectionString))
                 throw new KeyNotFoundException("La variable de entorno 'ConnectionString' no está definida.");
 
