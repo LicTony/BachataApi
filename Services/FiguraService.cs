@@ -109,5 +109,15 @@ namespace BachataApi.Services
             await UpdateAsyncWithPasos(figuraId, figura);
         }
 
+        public async Task<Figura?> GetRandomFiguraAsync()
+        {
+            var figuras = await _figurasCollection.Find(_ => true).ToListAsync();
+
+            if (figuras.Count == 0)
+                return null;
+
+            return figuras[Random.Shared.Next(figuras.Count)];
+        }
+
     }
 }

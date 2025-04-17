@@ -80,7 +80,7 @@ namespace BachataApi.Controllers
         }
 
         /// <summary>
-        /// Borrar un paso
+        /// Borrar una figura
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -158,6 +158,77 @@ namespace BachataApi.Controllers
             await _figuraService.SwapPasosAsync(figuraId, paso1, paso2);
             return NoContent();
         }
+
+
+
+        /// <summary>
+        /// Retorna aleatoriamente una figura con sus respectivos pasos en formato json
+        /// </summary>
+        /// <returns>Una figura con sus respectivos pasos</returns>
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [HttpGet("aleatoria")]
+        public async Task<ActionResult<Figura>> GetFiguraAleatoria()
+        {
+            var figura = await _figuraService.GetRandomFiguraAsync();
+
+
+            if (figura is null)
+                return NoContent();
+
+            return figura;
+
+        }
+
+
+        /// <summary>
+        /// Retorna aleatoriamente una figura con sus respectivos pasos en formato HTML
+        /// </summary>
+        /// <returns>Una figura con sus respectivos pasos</returns>
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpGet("aleatoriahtml")]
+        public async Task<IActionResult> GetFiguraAleatoriaHtml()
+        {
+            var figura = await _figuraService.GetRandomFiguraAsync();
+
+            if (figura is null)
+                return Content("<html><body><h1>No hay figuras disponibles.</h1></body></html>", "text/html");
+
+            var pasosHtml = figura.Pasos
+                .OrderBy(p => p.Orden)
+                .Select(p => $@"
+                    <li>
+                        Tiempo: {p.TiempoDesde} a {p.TiempoHasta}
+                        <br/>
+                        <strong>{p.Detalle}</strong>
+                    </li>")
+                .ToList();
+
+            var html = $@"
+                    <html>
+                        <head>
+                            <title>Figura Aleatoria</title>
+                            <style>
+                                body {{ font-family: sans-serif; padding: 2rem; background-color: #f4f4f4; }}
+                                h1 {{ color: #2c3e50; }}
+                                ul {{ list-style: none; padding: 0; }}
+                                li {{ background: white; margin-bottom: 1rem; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+                            </style>
+                        </head>
+                        <body>
+                            <h1>Figura: {figura.Detalle}</h1>
+                            <h3>Fecha: {figura.Fecha.ToShortDateString()}</h3>
+                            <h2>Pasos</h2>
+                            <ul>
+                                {string.Join("", pasosHtml)}
+                            </ul>
+                        </body>
+                    </html>";
+
+            return Content(html, "text/html");
+        }
+
+
 
 
     }
