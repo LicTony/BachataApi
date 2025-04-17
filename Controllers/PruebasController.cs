@@ -11,12 +11,24 @@ namespace BachataApi.Controllers
     public class PruebasController : ControllerBase
     {
         // GET: api/pruebas
+
+
+        /// <summary>
+        /// Obtiene un mensaje de prueba
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         public IActionResult ObtenerMensaje()
         {
             return Ok("¡Hola desde el controlador de pruebas!");
         }
 
+
+        /// <summary>
+        /// Rebice un parametro un numero entero
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // GET: api/pruebas/5
         [HttpGet("{id}")]
         public IActionResult ObtenerPorId(int id)
@@ -25,6 +37,12 @@ namespace BachataApi.Controllers
         }
 
         // POST: api/pruebas
+
+        /// <summary>
+        /// Recibo un paramero en el Body
+        /// </summary>
+        /// <param name="valor"></param>
+        /// <returns></returns>
         [HttpPost]
         public IActionResult Crear([FromBody] string valor)
         {
@@ -32,6 +50,12 @@ namespace BachataApi.Controllers
         }
 
         // PUT: api/pruebas/5
+        /// <summary>
+        /// Recibe un valor por Get y otro por el Body
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="nuevoValor"></param>
+        /// <returns></returns>
         [HttpPut("{id}")]
         public IActionResult Actualizar(int id, [FromBody] string nuevoValor)
         {
@@ -39,6 +63,11 @@ namespace BachataApi.Controllers
         }
 
         // DELETE: api/pruebas/5
+        /// <summary>
+        /// Recibe un paremetro por Get
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("{id}")]
         public IActionResult Eliminar(int id)
         {
@@ -47,6 +76,10 @@ namespace BachataApi.Controllers
 
         // NUEVO: GET que lee una variable de entorno
         // GET: api/pruebas/entorno
+        /// <summary>
+        /// GET que lee una variable de entorno
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("entorno")]
         public IActionResult LeerVariableEntorno()
         {
@@ -57,6 +90,11 @@ namespace BachataApi.Controllers
             return Ok($"Valor de MI_VARIABLE_PRUEBA: {valor}");
         }
 
+        /// <summary>
+        /// GET que lee una variable de entorno que le paso por parametro
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("entorno/{id}")]
         public IActionResult LeerVariableEntornoParam(string id)
         {
