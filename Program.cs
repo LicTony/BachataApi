@@ -1,7 +1,10 @@
-using BachataApi.Configuration;
+锘縰sing BachataApi.Configuration;
 using BachataApi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,19 +12,55 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 
-//Lee la secci髇 MongoDbSettings del appsettings.json (o de variables de entorno, etc.)
+//Lee la secci贸n MongoDbSettings del appsettings.json (o de variables de entorno, etc.)
 //Crea una instancia de la clase MongoDbSettings con esos valores.
-//La registra como un servicio en el contenedor de dependencias (DI) para que puedas inyectarla m醩 tarde.
-//builder.Services.Configure<MongoDbSettings>(
+//La registra como un servicio en el contenedor de dependencias (DI) para que puedas inyectarla m谩s tarde.
 builder.Services
     .AddOptions<MongoDbSettings>()
     .Bind(builder.Configuration.GetSection("MongoDbSettings"))
     .ValidateDataAnnotations()
-    .ValidateOnStart(); // <- Arroja excepci髇 si hay errores de validaci髇 al iniciar
+    .ValidateOnStart(); // <- Arroja excepci贸n si hay errores de validaci贸n al iniciar
 
+builder.Services
+    .AddOptions<JwtSettings>()
+    .Bind(builder.Configuration.GetSection("Jwt"))
+    .ValidateDataAnnotations()
+    .ValidateOnStart(); // <- Arroja excepci贸n si hay errores de validaci贸n al iniciar
+
+builder.Services
+    .AddOptions<UserSettings>()
+    .Bind(builder.Configuration.GetSection("User"))
+    .ValidateDataAnnotations()
+    .ValidateOnStart(); // <- Arroja excepci贸n si hay errores de validaci贸n al iniciar
+
+
+var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer = jwtSettings!.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key!))
+    };
+});
 
 
 builder.Services.AddSingleton<FiguraService>();
+builder.Services.AddSingleton<JwtService>();
+builder.Services.AddSingleton<UserService>();
+
 builder.Services.AddControllers();
 
 
@@ -39,20 +78,50 @@ builder.Services.AddSwaggerGen(options =>
         {
             Name = "By Tony",
             Email = "tony@tuproyecto.com",
-            Url = new Uri("https://bachataapi-1.onrender.com")
+            Url = new Uri($"https://bachataapi-1.onrender.com")
         },
         License = new OpenApiLicense
         {
             Name = "MIT",
-            Url = new Uri("https://opensource.org/licenses/MIT")
+            Url = new Uri($"https://opensource.org/licenses/MIT")
         }
     });
 
 
+    var jwtSecurityScheme = new OpenApiSecurityScheme
+    {
+        Scheme = "Bearer", //  importante
+        BearerFormat = "JWT",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Description = "Ingresa el JWT.\n\nEjemplo: eyJhbGciOiJIUzI1NiIsInR...",
+        Reference = new OpenApiReference
+        {
+            Id = JwtBearerDefaults.AuthenticationScheme,
+            Type = ReferenceType.SecurityScheme
+        }
+    };
+
+    options.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        { jwtSecurityScheme, Array.Empty<string>() }
+    });
+
+
+
+
+    //Para que salga las descripciones en el swagger
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     options.IncludeXmlComments(xmlPath);
+
+
+
 });
+
 
 
 
@@ -68,6 +137,17 @@ var app = builder.Build();
 //}
 
 app.MapControllers();
+
+
+app.MapGet("/", () =>
+{
+    return Results.Json(new
+    {
+        mensaje = "Estoy viva!",
+        fecha = DateTime.Now.ToString("yyyy-MM-dd"),
+        hora = DateTime.Now.ToString("HH:mm:ss")
+    });
+}).ExcludeFromDescription();
 
 app.Run();
 

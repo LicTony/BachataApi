@@ -1,5 +1,6 @@
 ﻿using BachataApi.Models;
 using BachataApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
@@ -21,6 +22,21 @@ namespace BachataApi.Controllers
         public IActionResult ObtenerMensaje()
         {
             return Ok("¡Hola desde el controlador de pruebas!");
+        }
+
+
+
+        /// <summary>
+        /// Este contenido solo es visible con JWT válido
+        /// </summary>
+        /// <returns></returns>
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [HttpGet("privado")]
+        public IActionResult GetPrivado()
+        {
+            return Ok("Este contenido solo es visible con JWT válido");
         }
 
 

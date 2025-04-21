@@ -13,12 +13,16 @@ namespace BachataApi.Services
     public class FiguraService
     {
         private readonly IMongoCollection<Figura> _figurasCollection;
+        
 
-        public FiguraService(IOptions<MongoDbSettings> settings)
+        public FiguraService(IOptions<MongoDbSettings> options)
         {
-            var mongoClient = new MongoClient(settings.Value.ConnectionString);
-            var database = mongoClient.GetDatabase(settings.Value.DatabaseName);
-            _figurasCollection = database.GetCollection<Figura>(settings.Value.FigurasCollectionName);
+            MongoDbSettings _settings;
+            _settings = options.Value;
+
+            var mongoClient = new MongoClient(_settings.ConnectionString);
+            var database = mongoClient.GetDatabase(_settings.DatabaseName);
+            _figurasCollection = database.GetCollection<Figura>(_settings.FigurasCollectionName);
         }
 
         // CRUD Figura
