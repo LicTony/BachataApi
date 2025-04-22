@@ -1,8 +1,12 @@
 ﻿using BachataApi.Configuration;
+using BachataApi.DTOs;
 using BachataApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 
@@ -62,6 +66,32 @@ builder.Services.AddSingleton<JwtService>();
 builder.Services.AddSingleton<UserService>();
 
 builder.Services.AddControllers();
+
+//Personalizar la respuesta de errores
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(ms => ms.Value?.Errors.Count > 0)
+            .SelectMany(kvp => kvp.Value!.Errors
+                .Select(e => new ErrorItem
+                {
+                    Field = kvp.Key,
+                    Message = e.ErrorMessage
+                }))
+            .ToList();
+
+        var errorResponse = new ErrorResponse
+        {
+            StatusCode = 400,
+            Message = "Solicitud inválida. Por favor revise los campos.",
+            Errors = errors
+        };
+
+        return new BadRequestObjectResult(errorResponse);
+    };
+});
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -148,6 +178,19 @@ app.MapGet("/", () =>
         hora = DateTime.Now.ToString("HH:mm:ss")
     });
 }).ExcludeFromDescription();
+
+
+//Mensajes en español
+var defaultCulture = new CultureInfo("es-AR"); // o "es-ES"
+var localizationOptions = new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(defaultCulture),
+    SupportedCultures = [defaultCulture],
+    SupportedUICultures = [defaultCulture]
+};
+
+app.UseRequestLocalization(localizationOptions);
+
 
 app.Run();
 

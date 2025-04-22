@@ -7,7 +7,7 @@ namespace BachataApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class FigurasController : ControllerBase
+    public class FigurasController : ApiControllerBase
     {
         private readonly FiguraService _figuraService;
 
@@ -23,9 +23,11 @@ namespace BachataApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public async Task<ActionResult<List<Figura>>> Get() =>
-            await _figuraService.GetAllAsync();
-
+        public async Task<IActionResult> Get() 
+        {
+            var figuras = await _figuraService.GetAllAsync();
+            return OkResponse(figuras);
+        }
 
         /// <summary>
         /// Obtener una figura en particular
@@ -35,14 +37,14 @@ namespace BachataApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpGet("{id:length(24)}")]
-        public async Task<ActionResult<Figura>> Get(string id)
+        public async Task<IActionResult> Get(string id)
         {
             var figura = await _figuraService.GetByIdAsync(id);
 
             if (figura is null)
-                return NotFound();
+                return NotFoundResponse("Figura no encontrada");
 
-            return figura;
+            return  OkResponse(figura);
         }
 
         /// <summary>
@@ -55,8 +57,8 @@ namespace BachataApi.Controllers
         public async Task<IActionResult> Post(CreateFiguraDto dto)
         {
             var figura = await _figuraService.CreateAsync(dto);
-            return CreatedAtAction(nameof(Get), new { id = figura.Id }, figura);
-          
+            return CreatedAtActionResponse(nameof(Get), new { id = figura.Id }, figura);
+
         }
         
         /// <summary>
@@ -72,11 +74,11 @@ namespace BachataApi.Controllers
         {
             var figura = await _figuraService.GetByIdAsync(id);
             if (figura is null)
-                return NotFound();
+                return NotFoundResponse();
 
             dto.Id = id;
             await _figuraService.UpdateAsync(id, dto);
-            return NoContent();
+            return NoContentResponse();
         }
 
         /// <summary>
@@ -91,10 +93,10 @@ namespace BachataApi.Controllers
         {
             var figura = await _figuraService.GetByIdAsync(id);
             if (figura is null)
-                return NotFound();
+                return NotFoundResponse();
 
             await _figuraService.DeleteAsync(id);
-            return NoContent();
+            return NoContentResponse();
         }
 
 
@@ -110,7 +112,7 @@ namespace BachataApi.Controllers
         public async Task<IActionResult> AddPaso(string figuraId, CreatePasoDto dto)
         {
             await _figuraService.AddPasoAsync(figuraId, dto);
-            return NoContent();
+            return NoContentResponse();
         }
 
         // PUT: api/figuras/{figuraId}/pasos
@@ -125,7 +127,7 @@ namespace BachataApi.Controllers
         public async Task<IActionResult> UpdatePaso(string figuraId, UpdatetPasoDto dto)
         {
             await _figuraService.UpdatePasoAsync(figuraId, dto);
-            return NoContent();
+            return NoContentResponse();
         }
 
         // DELETE: api/figuras/{figuraId}/pasos/{pasoId}
@@ -140,7 +142,7 @@ namespace BachataApi.Controllers
         public async Task<IActionResult> DeletePaso(string figuraId, string pasoId)
         {
             await _figuraService.DeletePasoAsync(figuraId, pasoId);
-            return NoContent();
+            return NoContentResponse();
         }
 
         // POST: api/figuras/{figuraId}/pasos/swap?paso1=abc&paso2=xyz
@@ -156,7 +158,7 @@ namespace BachataApi.Controllers
         public async Task<IActionResult> SwapPasos(string figuraId, [FromQuery] string paso1, [FromQuery] string paso2)
         {
             await _figuraService.SwapPasosAsync(figuraId, paso1, paso2);
-            return NoContent();
+            return NoContentResponse();
         }
 
 
@@ -168,15 +170,15 @@ namespace BachataApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [HttpGet("aleatoria")]
-        public async Task<ActionResult<Figura>> GetFiguraAleatoria()
+        public async Task<IActionResult> GetFiguraAleatoria()
         {
             var figura = await _figuraService.GetRandomFiguraAsync();
 
 
             if (figura is null)
-                return NoContent();
+                return NoContentResponse();
 
-            return figura;
+            return OkResponse(figura);
 
         }
 
